@@ -1,4 +1,4 @@
-name: .NET 8 WebAPI CI
+name: .NET 8 WebAPI CI (Linux Runner + Linux App Service)
 
 on:
   push:
@@ -8,11 +8,11 @@ on:
   workflow_dispatch:
 
 jobs:
-  build:
-    runs-on: windows-latest
+  build-and-deploy:
+    runs-on: ubuntu-latest
 
     steps:
-      # 1) Checkout the repository so we have access to the solution and projects
+      # 1) Checkout the repository so we have access to solution & projects
       - name: Checkout code
         uses: actions/checkout@v4
 
@@ -25,7 +25,7 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-nuget-
 
-      # 3) Install .NET 8 SDK
+      # 3) Install .NET 8 SDK on Ubuntu
       - name: Setup .NET 8 SDK
         uses: actions/setup-dotnet@v4
         with:
@@ -47,8 +47,19 @@ jobs:
       - name: Publish WebAPI
         run: dotnet publish HealthHUB.API/HealthHUB.API.csproj --configuration Release --output ./publish
 
-      # 8) Upload the published output as a build artifact
-      - name: Upload build artifacts
+      # 8) Deploy the published output to a Linux-based Azure App Service
+      - name: Deploy to Azure Web App (Linux)
+        uses: Azure/webapps-deploy@v2
+        with:
+          # Replace this with the exact name of your Linux App Service
+          app-name: healthhub-api-demo  
+          slot-name: Production
+          # The publish profile (XML) you saved into GitHub Secrets as AZURE_WEBAPP_PUBLISH_PROFILE
+          publish-profile: ${{ secrets.AZURE_WEBAPP_PUBLISH_PROFILE }}
+          package: ./publish
+
+      # 9) (Optional) Upload the published folder as a GitHub Actions artifact
+      - name: Upload build artifact (optional)
         uses: actions/upload-artifact@v4
         with:
           name: webapi-published
