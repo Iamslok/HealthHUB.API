@@ -12,11 +12,11 @@ jobs:
     runs-on: windows-latest
 
     steps:
-      # 1) Checkout the repository so that we have access to the solution & projects
+      # 1) Checkout the repository so we have access to the solution and projects
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 2) (Optional) Cache NuGet packages to speed up restores/builds
+      # 2) (Optional) Cache NuGet packages to speed up restores and builds
       - name: Cache NuGet packages
         uses: actions/cache@v3
         with:
@@ -25,39 +25,29 @@ jobs:
           restore-keys: |
             ${{ runner.os }}-nuget-
 
-      # 3) Ensure .NET 8 SDK is installed
+      # 3) Install .NET 8 SDK
       - name: Setup .NET 8 SDK
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
 
-      # 4) Restore all dependencies for the solution in the repo root
+      # 4) Restore all dependencies for the solution at the repository root
       - name: Restore dependencies
-        run: |
-          # By default, this finds HealthHUB.API.sln in the root
-          dotnet restore HealthHUB.API.sln
+        run: dotnet restore HealthHUB.API.sln
 
-      # 5) Build the entire solution (no output folder; each project goes to its own bin/)
+      # 5) Build the entire solution (no --output here)
       - name: Build solution
-        run: |
-          dotnet build HealthHUB.API.sln --no-restore --configuration Release
+        run: dotnet build HealthHUB.API.sln --no-restore --configuration Release
 
       # 6) Run all unit tests in the solution
-      #    If you have test projects alongside the WebAPI, this finds them automatically.
       - name: Run tests
-        run: |
-          dotnet test HealthHUB.API.sln --no-build --verbosity normal
+        run: dotnet test HealthHUB.API.sln --no-build --verbosity normal
 
-      # 7) Publish only the WebAPI project to a single "publish" folder
-      #    ▶ Replace the path if your .csproj is somewhere else, but according to your screenshot:
-      #      HealthHUB.API/HealthHUB.API.csproj is correct.
+      # 7) Publish the HealthHUB.API project to the ./publish folder
       - name: Publish WebAPI
-        run: |
-          dotnet publish HealthHUB.API/HealthHUB.API.csproj \
-            --configuration Release \
-            --output ./publish
+        run: dotnet publish HealthHUB.API/HealthHUB.API.csproj --configuration Release --output ./publish
 
-      # 8) Upload the "publish" folder as an artifact for downstream jobs or deployments
+      # 8) Upload the published output as a build artifact
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
         with:
