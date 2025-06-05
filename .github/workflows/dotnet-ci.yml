@@ -16,38 +16,29 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      # 2) (Optional) Cache NuGet packages to speed up restores and builds
-      - name: Cache NuGet packages
-        uses: actions/cache@v3
-        with:
-          path: ~/.nuget/packages
-          key: ${{ runner.os }}-nuget-${{ hashFiles('**/*.csproj') }}
-          restore-keys: |
-            ${{ runner.os }}-nuget-
-
-      # 3) Install .NET 8 SDK on Ubuntu
+      # 2) Install .NET 8 SDK on Ubuntu
       - name: Setup .NET 8 SDK
         uses: actions/setup-dotnet@v4
         with:
           dotnet-version: '8.0.x'
 
-      # 4) Restore all dependencies for the solution at the repository root
+      # 3) Restore all dependencies for the solution at the repository root
       - name: Restore dependencies
         run: dotnet restore HealthHUB.API.sln
 
-      # 5) Build the entire solution (no --output here)
+      # 4) Build the entire solution (no --output here)
       - name: Build solution
         run: dotnet build HealthHUB.API.sln --no-restore --configuration Release
 
-      # 6) Run all unit tests in the solution
+      # 5) Run all unit tests in the solution
       - name: Run tests
         run: dotnet test HealthHUB.API.sln --no-build --verbosity normal
 
-      # 7) Publish the HealthHUB.API project to the ./publish folder
+      # 6) Publish the HealthHUB.API project to the ./publish folder
       - name: Publish WebAPI
         run: dotnet publish HealthHUB.API/HealthHUB.API.csproj --configuration Release --output ./publish
 
-      # 8) Deploy the published output to a Linux-based Azure App Service
+      # 7) Deploy the published output to a Linux-based Azure App Service
       - name: Deploy to Azure Web App (Linux)
         uses: Azure/webapps-deploy@v2
         with:
